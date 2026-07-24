@@ -85,12 +85,12 @@ export const store = {
 
 // ═══ 成就称号：按足迹总数解锁 ═══
 export const TITLES = [
-  { need: 0,  title: '初次踏足另一面' },
+  { need: 0,  title: '初次踏入夜色' },
   { need: 3,  title: '开始有了秘密基地' },
-  { need: 6,  title: '这一面的常客' },
+  { need: 6,  title: '山河间的常客' },
   { need: 10, title: '四景巡游者' },
-  { need: 16, title: '太湖地缚灵' },
-  { need: 25, title: '另一面的常住人口' },
+  { need: 16, title: '夜行地缚灵' },
+  { need: 25, title: '夜游神的常住人口' },
 ];
 
 export function titleFor(count) {

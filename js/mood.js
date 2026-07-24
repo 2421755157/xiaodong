@@ -130,7 +130,7 @@ export function drawMoodCard(canvas, r) {
   g.textAlign = 'center';
   g.fillStyle = '#9a958a';
   g.font = '26px ' + SERIF;
-  g.fillText('另 一 面 · 精 神 状 态 鉴 定 局', cx, y);
+  g.fillText('夜 游 神 · 精 神 状 态 鉴 定 局', cx, y);
   y += 40;
   g.fillStyle = '#5d594f';
   g.font = '20px ' + SERIF;

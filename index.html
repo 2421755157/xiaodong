@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>另一面 · The Other Side — 无锡</title>
+<title>夜游神 · 山河漫游</title>
 <link rel="stylesheet" href="styles/main.css">
 <script type="importmap">
 { "imports": {
@@ -14,16 +14,16 @@
 </head>
 <body>
 
-<!-- ══════════ 登录屏：欢迎来到你生活的另一面 ══════════ -->
+<!-- ══════════ 登录屏 ══════════ -->
 <section id="gate">
   <canvas id="gate-particles"></canvas>
   <div class="gate-inner">
-    <p class="gate-eyebrow">THE OTHER SIDE OF YOUR LIFE</p>
-    <h1 class="gate-title">欢迎来到<br>你生活的<span class="gold">另一面</span></h1>
-    <p class="gate-sub">白天归生活，夜里归自己。<br>这里不卷、不装、不解释。</p>
+    <p class="gate-eyebrow">NIGHT ROAMER · 山河漫游</p>
+    <h1 class="gate-title">天黑了<br>该<span class="gold">出去走走</span>了</h1>
+    <p class="gate-sub">白天归生活，夜里归自己。<br>三千山河，随便逛，不赶时间。</p>
     <div class="gate-form">
       <input id="gate-name" type="text" maxlength="12" placeholder="怎么称呼你？（随口编一个也行）" autocomplete="off">
-      <button id="gate-enter" class="btn-gold">推门而入 →</button>
+      <button id="gate-enter" class="btn-gold">出门夜游 →</button>
     </div>
     <p class="gate-foot">数据只存在你自己的浏览器里 · 没有人知道你来过</p>
   </div>
@@ -33,10 +33,10 @@
 <section id="home" hidden>
   <header class="home-head">
     <div class="brand">
-      <span class="brand-mark">另</span>
+      <span class="brand-mark">夜</span>
       <div class="brand-text">
-        <b>另一面 · 无锡</b>
-        <i>THE OTHER SIDE</i>
+        <b>夜游神 · 山河漫游</b>
+        <i>NIGHT ROAMER</i>
       </div>
     </div>
     <div class="head-right">
@@ -44,10 +44,10 @@
         <span id="user-name"></span>
         <em id="user-title"></em>
       </div>
-      <button class="btn-ghost" id="btn-fortune">今日一签</button>
-      <button class="btn-ghost" id="btn-shredder">情绪粉碎机</button>
-      <button class="btn-gold" id="btn-mood-home">今日心情鉴定</button>
-      <button class="btn-ghost" id="btn-logout" title="换个身份">离席</button>
+      <button class="btn-ghost" id="btn-fortune">摇一签</button>
+      <button class="btn-ghost" id="btn-shredder">碎碎平安</button>
+      <button class="btn-gold" id="btn-mood-home">鉴定精神状态</button>
+      <button class="btn-ghost" id="btn-logout" title="换个身份">收工</button>
     </div>
   </header>
 
@@ -194,11 +194,14 @@
 <!-- ══════════ 弹窗：每日一签 ══════════ -->
 <div class="modal" id="fortune-modal" hidden>
   <div class="modal-card fortune-card">
-    <p class="fortune-eyebrow">另一面 · 灵签办事处</p>
+    <p class="fortune-eyebrow">夜游神 · 灵签办事处</p>
+    <p class="fortune-serial" id="fortune-serial"></p>
+    <p class="fortune-level" id="fortune-level"></p>
     <h3 id="fortune-text"></h3>
     <p id="fortune-sub"></p>
+    <p class="fortune-yiji" id="fortune-yiji"></p>
     <div class="modal-actions">
-      <button class="btn-gold" id="fortune-close">领旨</button>
+      <button class="btn-gold" id="fortune-close">领旨谢恩</button>
     </div>
   </div>
 </div>
@@ -206,12 +209,13 @@
 <!-- ══════════ 弹窗：情绪粉碎机 ══════════ -->
 <div class="modal" id="shredder-modal" hidden>
   <div class="modal-card">
-    <h3>情绪粉碎机</h3>
-    <p class="modal-sub">写下来，点粉碎。不保存、不上传、尘归尘土归土。</p>
-    <textarea id="shred-text" rows="5" maxlength="1000" placeholder="把最烦的事、最烦的人，写在这儿……"></textarea>
+    <h3>碎碎平安 · 情绪粉碎局</h3>
+    <p class="modal-sub">写下来，点粉碎。不保存、不上传、不留证据。<br>碎完就是碎完了，谁也拼不回来。</p>
+    <p class="shred-count" id="shred-count"></p>
+    <textarea id="shred-text" rows="5" maxlength="1000" placeholder="把最烦的事、最烦的人、最烦的自己，全写在这儿……"></textarea>
     <div class="modal-actions">
-      <button class="btn-ghost" id="shred-close">关闭</button>
-      <button class="btn-danger" id="shred-go">粉 碎</button>
+      <button class="btn-ghost" id="shred-close">先留着</button>
+      <button class="btn-danger" id="shred-go">粉 碎 它</button>
     </div>
   </div>
 </div>
@@ -219,8 +223,8 @@
 <!-- ══════════ 弹窗：心情问卷（无足迹时） ══════════ -->
 <div class="modal" id="quiz-modal" hidden>
   <div class="modal-card quiz-card">
-    <p class="quiz-eyebrow">另一面 · 精神状态快速鉴定</p>
-    <h3 id="quiz-title">今天没出门？没关系，回答几个问题也能鉴定。</h3>
+    <p class="quiz-eyebrow">夜游神 · 精神状态快速鉴定</p>
+    <h3 id="quiz-title">今天没出门？没关系，躺着也能鉴定。</h3>
     <div id="quiz-body"></div>
     <div class="modal-actions">
       <button class="btn-ghost" id="quiz-close">算了不鉴定了</button>

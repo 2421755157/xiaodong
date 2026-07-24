@@ -1,4 +1,4 @@
-// ═══ 另一面 · 主逻辑（全国版：省→市→景点）═══
+// ═══ 夜游神 · 主逻辑（全国版：省→市→景点）═══
 import * as THREE from 'three';
 import { store, titleFor } from './store.js';
 import { PROVINCES, SPOT_TYPE, stats } from './china-data.js';
@@ -622,13 +622,27 @@ function submitQuiz() {
 }
 
 // ═════════ 每日一签 ═════════
+const FORTUNE_LEVELS = ['上上签 · 万事可期', '上签 · 好事将近', '中签 · 稳中向好', '上签 · 否极泰来'];
+const FORTUNE_YI = ['宜发呆', '宜散步', '宜吃好的', '宜早睡', '宜放空', '宜见想见的人', '宜不解释', '宜绕路走'];
+const FORTUNE_JI = ['忌内耗', '忌复盘', '忌已读不回', '忌自我审判', '忌翻旧账', '忌硬撑', '忌解释', '忌卷'];
+
 function openFortune() {
   const key = new Date().toISOString().slice(0, 10);
   let idx = store.getFortune(key);
   if (idx === undefined) { idx = Math.floor(Math.random() * FORTUNES.length); store.setFortune(key, idx); }
   const [main, sub] = FORTUNES[idx];
+  // 签文编号（日期+序号，增加收藏感）
+  const serial = '第 ' + String(idx + 1).padStart(2, '0') + ' 签 · ' + key.replace(/-/g, '.');
+  // 签文等级（基于 idx 确定性分配，同一天不变）
+  const level = FORTUNE_LEVELS[idx % FORTUNE_LEVELS.length];
+  // 宜忌
+  const yi = FORTUNE_YI[idx % FORTUNE_YI.length];
+  const ji = FORTUNE_JI[(idx + 3) % FORTUNE_JI.length];
+  $('#fortune-serial').textContent = serial;
+  $('#fortune-level').textContent = level;
   $('#fortune-text').textContent = main;
   $('#fortune-sub').textContent = sub;
+  $('#fortune-yiji').textContent = yi + '  /  ' + ji;
   $('#fortune-modal').hidden = false;
 }
 
@@ -646,7 +660,7 @@ function bind() {
     store.setUser(name);
     renderHome();
     show('#home');
-    toast('欢迎，' + name + '。另一面正式营业。');
+    toast('欢迎，' + name + '。夜游神已上线，山河等你。');
   };
   $('#gate-enter').addEventListener('click', tryEnter);
   $('#gate-name').addEventListener('keydown', e => { if (e.key === 'Enter') tryEnter(); });
@@ -663,6 +677,8 @@ function bind() {
     $('#shred-text').value = '';
     $('#shredder-modal').hidden = false;
     $('#shredder-modal .modal-card').classList.remove('shredding');
+    const cnt = store.data.shredCount || 0;
+    $('#shred-count').textContent = cnt > 0 ? '你已亲手粉碎 ' + cnt + ' 段烦恼，它们再也回不来了。' : '第一次来？写点什么，然后让它消失。';
   });
   $('#shred-close').addEventListener('click', () => { $('#shredder-modal').hidden = true; });
   $('#shred-go').addEventListener('click', () => {
@@ -674,7 +690,17 @@ function bind() {
       $('#shredder-modal').hidden = true;
       card.classList.remove('shredding');
       $('#shred-text').value = '';
-      toast('已粉碎 · 尘归尘，土归土，烦恼归太湖');
+      // 累计粉碎计数
+      store.data.shredCount = (store.data.shredCount || 0) + 1;
+      try { localStorage.setItem('other-side-wuxi-v1', JSON.stringify(store.data)); } catch(e) {}
+      const blessings = [
+        '已粉碎 · 尘归尘，土归土，烦恼归山河',
+        '已粉碎 · 碎碎平安，岁岁平安',
+        '已粉碎 · 风会替你把它们吹散',
+        '已粉碎 · 今晚的月亮不记得这些',
+        '已粉碎 · 明天又是新的一天，谁还认识它',
+      ];
+      toast(blessings[Math.floor(Math.random() * blessings.length)]);
     }, 1150);
   });
   $('#fortune-close').addEventListener('click', () => { $('#fortune-modal').hidden = true; });
