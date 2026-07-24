@@ -510,9 +510,113 @@ function submitNote() {
 // ═════════ 心情鉴定 ═════════
 function openMood() {
   const fps = store.todayFootprints();
-  if (!fps.length) { toast('今天还没留下足迹——先选景点进 3D 按 E 写一条'); return; }
+  if (!fps.length) { openQuiz(); return; }
   roamer?.unlock?.();
   const r = analyzeToday(fps, store.data.user?.name);
+  drawMoodCard($('#mood-canvas'), r);
+  $('#mood-modal').hidden = false;
+}
+
+// ═════════ 心情问卷（无足迹时替代方案） ═════════
+const QUIZ_POOL = [
+  { q: '现在的你，更接近哪种状态？', opts: [
+    { text: '充满电了，想搞点事', mood: 5, keywords: '开心 快乐 爽 棒' },
+    { text: '还行，平平淡淡才是真', mood: 3, keywords: '平静 安静 放松 自在' },
+    { text: '有点累，想躺平', mood: 2, keywords: '累 疲惫 丧 低落' },
+    { text: '碎掉了，别碰我', mood: 1, keywords: '难过 崩溃 想哭 撑不住' },
+  ]},
+  { q: '如果现在给你一天假，你会？', opts: [
+    { text: '冲出去浪！', mood: 5, keywords: '开心 快乐 惊喜 浪漫' },
+    { text: '找个安静的地方待着', mood: 3, keywords: '安静 平静 放空 慢慢' },
+    { text: '睡到自然醒，谁也别找我', mood: 2, keywords: '累 疲惫 孤独 空虚' },
+    { text: '大概也提不起劲', mood: 1, keywords: '难过 丧 失落 撑不住' },
+  ]},
+  { q: '最近脑子里循环播放的是？', opts: [
+    { text: '哈哈哈今天也好开心', mood: 5, keywords: '哈哈 开心 高兴 嘻嘻' },
+    { text: '一些不确定的事，纠结', mood: 2, keywords: '为什么 如果 怎么办 纠结 犹豫 后悔' },
+    { text: '算了，想通了，无所谓', mood: 4, keywords: '想通 算了 没事 放下 释然 接受' },
+    { text: '气死我了！！', mood: 2, keywords: '气 烦死 讨厌 怒 离谱 无语 爆炸' },
+  ]},
+  { q: '此刻窗外的天气，像你的心情吗？', opts: [
+    { text: '像，晴空万里', mood: 5, keywords: '开心 美好 幸福 阳光' },
+    { text: '像，阴沉沉的', mood: 2, keywords: '难过 郁闷 低落 空虚' },
+    { text: '不像，我内心比天气复杂', mood: 3, keywords: '纠结 矛盾 想不通 犹豫' },
+    { text: '没注意窗外，沉浸在自己的世界', mood: 3, keywords: '安静 发呆 放空 平静' },
+  ]},
+  { q: '用一道菜形容今天的自己？', opts: [
+    { text: '火锅——热辣滚烫，活力满满', mood: 5, keywords: '开心 爽 快乐 棒' },
+    { text: '白粥——平平淡淡，没啥味道', mood: 3, keywords: '平静 安静 放松 无所谓' },
+    { text: '苦瓜——苦，但得咽下去', mood: 2, keywords: '累 烦 焦虑 压力 熬' },
+    { text: '碎掉的饼干——拼不回去了', mood: 1, keywords: '难过 心碎 崩溃 想哭' },
+  ]},
+  { q: '如果情绪有重量，你现在背着多少？', opts: [
+    { text: '轻飘飘的，快飞起来了', mood: 5, keywords: '开心 快乐 幸福 美好 惊喜' },
+    { text: '正常负重，还撑得住', mood: 3, keywords: '平静 放松 自在 还好' },
+    { text: '有点沉，步子慢了', mood: 2, keywords: '累 疲惫 压力 焦虑 丧' },
+    { text: '快被压垮了', mood: 1, keywords: '崩溃 撑不住 难过 想哭 空虚' },
+  ]},
+  { q: '此刻最想对世界说一句？', opts: [
+    { text: '今天也是元气满满的一天！', mood: 5, keywords: '开心 快乐 哈哈 棒 感动' },
+    { text: '别来烦我，我想静静', mood: 2, keywords: '烦 安静 平静 放空 独处' },
+    { text: '算了，都这样了', mood: 3, keywords: '算了 想通 放下 无所谓 释然' },
+    { text: '为什么偏偏是我', mood: 1, keywords: '为什么 难过 委屈 不公 想哭' },
+  ]},
+  { q: '今晚睡前你会？', opts: [
+    { text: '带着笑意入睡', mood: 5, keywords: '开心 幸福 满足 快乐 温柔' },
+    { text: '刷会儿手机就睡了', mood: 3, keywords: '平静 放松 安静 无所谓' },
+    { text: '翻来覆去想事情', mood: 2, keywords: '纠结 犹豫 后悔 如果 怎么办 想不通' },
+    { text: '可能又睡不着了', mood: 1, keywords: '焦虑 难过 累 撑不住 空虚 孤独' },
+  ]},
+];
+
+let quizAnswers = [];
+
+function openQuiz() {
+  roamer?.unlock?.();
+  quizAnswers = [];
+  // 随机抽 4 题
+  const shuffled = [...QUIZ_POOL].sort(() => Math.random() - 0.5);
+  const picked = shuffled.slice(0, 4);
+  const body = $('#quiz-body');
+  body.innerHTML = '';
+  picked.forEach((item, qi) => {
+    const div = document.createElement('div');
+    div.className = 'quiz-item';
+    div.innerHTML = '<p class="quiz-q">' + (qi + 1) + '. ' + item.q + '</p><div class="quiz-opts"></div>';
+    const optsDiv = div.querySelector('.quiz-opts');
+    item.opts.forEach((opt, oi) => {
+      const btn = document.createElement('button');
+      btn.className = 'quiz-opt';
+      btn.textContent = opt.text;
+      btn.addEventListener('click', () => {
+        optsDiv.querySelectorAll('.quiz-opt').forEach(b => b.classList.remove('on'));
+        btn.classList.add('on');
+        quizAnswers[qi] = opt;
+        checkQuizReady(picked.length);
+      });
+      optsDiv.appendChild(btn);
+    });
+    body.appendChild(div);
+  });
+  $('#quiz-submit').disabled = true;
+  $('#quiz-modal').hidden = false;
+}
+
+function checkQuizReady(total) {
+  const answered = quizAnswers.filter(Boolean).length;
+  $('#quiz-submit').disabled = answered < total;
+}
+
+function submitQuiz() {
+  // 将问卷答案转换为虚拟足迹数据，喂给 analyzeToday
+  const fakeFps = quizAnswers.filter(Boolean).map((opt, i) => ({
+    mood: opt.mood,
+    score: opt.mood * 2,
+    text: opt.keywords,
+    ts: Date.now() - i * 60000,
+  }));
+  $('#quiz-modal').hidden = true;
+  const r = analyzeToday(fakeFps, store.data.user?.name);
   drawMoodCard($('#mood-canvas'), r);
   $('#mood-modal').hidden = false;
 }
@@ -574,6 +678,8 @@ function bind() {
     }, 1150);
   });
   $('#fortune-close').addEventListener('click', () => { $('#fortune-modal').hidden = true; });
+  $('#quiz-close').addEventListener('click', () => { $('#quiz-modal').hidden = true; });
+  $('#quiz-submit').addEventListener('click', submitQuiz);
 
   $('#lock-mask').addEventListener('click', () => roamer.lock());
   $('#btn-back').addEventListener('click', leaveSpot);

@@ -216,6 +216,19 @@
   </div>
 </div>
 
+<!-- ══════════ 弹窗：心情问卷（无足迹时） ══════════ -->
+<div class="modal" id="quiz-modal" hidden>
+  <div class="modal-card quiz-card">
+    <p class="quiz-eyebrow">另一面 · 精神状态快速鉴定</p>
+    <h3 id="quiz-title">今天没出门？没关系，回答几个问题也能鉴定。</h3>
+    <div id="quiz-body"></div>
+    <div class="modal-actions">
+      <button class="btn-ghost" id="quiz-close">算了不鉴定了</button>
+      <button class="btn-gold" id="quiz-submit" disabled>出鉴定结果 →</button>
+    </div>
+  </div>
+</div>
+
 <div id="toast" hidden></div>
 
 <script type="module" src="js/app.js"></script>
