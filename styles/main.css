@@ -415,3 +415,83 @@ input,textarea{font-family:inherit;color:var(--ink)}
   background:rgba(211,185,138,.08);
 }
 #quiz-submit:disabled{opacity:.4;cursor:not-allowed}
+
+/* ═══════════ 免责声明 ═══════════ */
+.lock-disclaimer{font-size:11px;color:#5d594f;margin-top:14px;letter-spacing:1px}
+.hud-disclaimer{font-size:11px;color:#5d594f;margin-left:8px}
+.lock-hint-mobile{display:none}
+
+/* ═══════════ 触摸控制（移动端） ═══════════ */
+#touch-controls{position:fixed;inset:0;z-index:30;pointer-events:none}
+#joystick-zone{
+  position:absolute;left:24px;bottom:32px;width:130px;height:130px;
+  pointer-events:auto;
+}
+#joystick-base{
+  width:120px;height:120px;border-radius:50%;
+  border:2px solid rgba(211,185,138,.35);
+  background:rgba(16,24,22,.5);
+  display:flex;align-items:center;justify-content:center;
+  backdrop-filter:blur(4px);
+}
+#joystick-knob{
+  width:48px;height:48px;border-radius:50%;
+  background:radial-gradient(circle at 35% 35%,rgba(211,185,138,.6),rgba(211,185,138,.2));
+  border:1px solid rgba(211,185,138,.5);
+  transition:transform .08s ease-out;
+}
+#touch-look-zone{
+  position:absolute;right:0;top:0;width:55%;height:100%;
+  pointer-events:auto;
+}
+#touch-btns{
+  position:absolute;right:20px;bottom:36px;
+  display:flex;gap:12px;pointer-events:auto;
+}
+.touch-btn{
+  width:56px;height:56px;border-radius:50%;
+  background:rgba(16,24,22,.7);border:1px solid var(--gold-dim);
+  color:var(--ink);font-size:12px;letter-spacing:2px;
+  backdrop-filter:blur(4px);cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+}
+.touch-btn:active{background:rgba(211,185,138,.2)}
+
+/* ═══════════ 个人主页 ═══════════ */
+.profile-card{max-width:420px;text-align:center}
+.profile-avatar{
+  width:64px;height:64px;border-radius:50%;margin:0 auto 18px;
+  background:linear-gradient(135deg,var(--gold-dim),var(--teal));
+  display:flex;align-items:center;justify-content:center;
+  font-family:var(--serif);font-size:28px;color:#0b100f;
+}
+.profile-field{text-align:left;margin-bottom:16px}
+.profile-field label{display:block;font-size:12px;color:var(--ink-dim);letter-spacing:2px;margin-bottom:6px}
+.profile-field input{
+  width:100%;background:rgba(255,255,255,.04);border:1px solid var(--line);
+  border-radius:4px;padding:10px 14px;font-size:14px;color:var(--ink);outline:none;transition:.2s;
+}
+.profile-field input:focus{border-color:var(--gold-dim)}
+.profile-moods{display:flex;gap:10px}
+.pmood{
+  width:40px;height:40px;border-radius:50%;border:1px solid var(--line);
+  background:rgba(255,255,255,.03);font-size:20px;cursor:pointer;transition:.2s;
+  display:flex;align-items:center;justify-content:center;
+}
+.pmood:hover{border-color:var(--gold-dim)}
+.pmood.on{border-color:var(--gold);background:rgba(211,185,138,.12);transform:scale(1.15)}
+.profile-stats{
+  margin-top:18px;padding:14px;background:rgba(255,255,255,.025);
+  border-radius:6px;font-size:13px;color:var(--ink-dim);line-height:2;text-align:left;
+}
+
+/* ═══════════ 移动端适配 ═══════════ */
+@media (max-width:720px){
+  .lock-hint-desktop{display:none}
+  .lock-hint-mobile{display:inline}
+  .hud-desktop-only{display:none}
+  #touch-controls:not([hidden]){display:block}
+}
+@media (min-width:721px){
+  #touch-controls{display:none!important}
+}

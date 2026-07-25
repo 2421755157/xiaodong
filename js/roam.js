@@ -1,5 +1,7 @@
-// ═══ 第一人称漫游：指针锁定 + WASD + 地面贴合 + 碰撞 ═══
+// ═══ 第一人称漫游：指针锁定 + WASD + 触摸摇杆 + 地面贴合 + 碰撞 ═══
 import * as THREE from 'three';
+
+export const isMobile = /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent) || ('ontouchstart' in window && window.innerWidth < 1024);
 
 export class Roamer {
   constructor(camera, dom) {
@@ -20,6 +22,11 @@ export class Roamer {
     this.vy = 0;
     this.airborne = false;
 
+    // ─── 触摸控制 ───
+    this.touchMove = { x: 0, y: 0 };   // 摇杆输入 (-1~1)
+    this.touchLook = { x: 0, y: 0 };   // 视角增量
+    this.touchRunning = false;          // 移动端是否处于"漫游中"
+
     this._onMouseMove = e => {
       if (!this.locked) return;
       this.yaw -= e.movementX * 0.0022;
@@ -39,7 +46,7 @@ export class Roamer {
     document.addEventListener('pointerlockchange', this._onLockChange);
   }
 
-  lock() { if (!this.locked) this.dom.requestPointerLock(); }
+  lock() { if (!isMobile && !this.locked) this.dom.requestPointerLock(); }
   unlock() { if (this.locked) document.exitPointerLock(); }
 
   spawnAt(pos, yaw) {
@@ -67,14 +74,29 @@ export class Roamer {
     if (!this.enabled) return;
     const speed = this.keys.has('ShiftLeft') || this.keys.has('ShiftRight') ? 11.5 : 5.5;
 
+    // 触摸视角
+    if (this.touchLook.x !== 0 || this.touchLook.y !== 0) {
+      this.yaw -= this.touchLook.x * 0.003;
+      this.pitch -= this.touchLook.y * 0.003;
+      this.pitch = Math.max(-1.35, Math.min(1.35, this.pitch));
+      this.touchLook.x = 0;
+      this.touchLook.y = 0;
+    }
+
     const f = new THREE.Vector3(-Math.sin(this.yaw), 0, -Math.cos(this.yaw));
     const r = new THREE.Vector3(-f.z, 0, f.x);
     const move = new THREE.Vector3();
-    if (this.locked) {
+    const canMove = this.locked || (isMobile && this.touchRunning);
+    if (canMove) {
       if (this.keys.has('KeyW')) move.add(f);
       if (this.keys.has('KeyS')) move.sub(f);
       if (this.keys.has('KeyD')) move.add(r);
       if (this.keys.has('KeyA')) move.sub(r);
+      // 触摸摇杆
+      if (this.touchMove.x !== 0 || this.touchMove.y !== 0) {
+        move.add(f.clone().multiplyScalar(-this.touchMove.y));
+        move.add(r.clone().multiplyScalar(this.touchMove.x));
+      }
     }
     if (move.lengthSq() > 0) move.normalize().multiplyScalar(speed);
 

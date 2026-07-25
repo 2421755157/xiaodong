@@ -3,7 +3,7 @@ import * as THREE from 'three';
 import { store, titleFor } from './store.js';
 import { PROVINCES, SPOT_TYPE, stats } from './china-data.js';
 import { buildScene, resolveTheme, THEME_ORDER, themeLabel, PRO_SCENES, spotSeed } from './scenes.js';
-import { Roamer } from './roam.js';
+import { Roamer, isMobile } from './roam.js';
 import { analyzeToday, drawMoodCard } from './mood.js';
 import { FORTUNES, greetingFor, SPOT_MEMES, expandDesc, pickN } from './lexicon.js';
 import { getSpotImages, getSpotCover } from './spot-images.js';
@@ -301,9 +301,11 @@ function ensureRenderer() {
   camera = new THREE.PerspectiveCamera(68, 1, 0.1, 900);
   roamer = new Roamer(camera, $('#scene-canvas'));
   roamer.onLockChange = locked => {
-    $('#lock-mask').hidden = locked;
-    $('#crosshair').style.display = locked ? 'block' : 'none';
-    if (!locked) { $('#hotspot-tip').hidden = true; $('#fp-tip').hidden = true; }
+    $('#lock-mask').hidden = locked || (isMobile && roamer.touchRunning);
+    $('#crosshair').style.display = (locked || (isMobile && roamer.touchRunning)) ? 'block' : 'none';
+    if (!locked && !(isMobile && roamer.touchRunning)) { $('#hotspot-tip').hidden = true; $('#fp-tip').hidden = true; }
+    // 移动端显示/隐藏触摸控制
+    if (isMobile) $('#touch-controls').hidden = !(locked || roamer.touchRunning);
   };
   composer = new EffectComposer(renderer);
   bloomPass = new UnrealBloomPass(new THREE.Vector2(innerWidth, innerHeight), 0.55, 0.5, 0.82);
@@ -352,16 +354,21 @@ function enterSpot(prov, city, spot) {
 
   show('#stage');
   $('#lock-mask').hidden = false;
+  if (isMobile) { roamer.touchRunning = false; $('#touch-controls').hidden = true; }
   clock = new THREE.Clock();
   running = true;
   coverShotAt = performance.now() + 2600;
   loop();
+  // 免责提示
+  setTimeout(() => toast('场景由程序实时生成，仅供娱乐参考，不代表实景', 3500), 800);
 }
 
 function leaveSpot() {
   running = false;
   roamer.enabled = false;
+  roamer.touchRunning = false;
   roamer.unlock();
+  if (isMobile) $('#touch-controls').hidden = true;
   if (built) {
     built.scene.traverse(o => { if (o.geometry) o.geometry.dispose(); });
     built = null;
@@ -399,7 +406,7 @@ function shootCover() {
 
 let nearHotspot = null;
 function checkHotspot() {
-  if (!roamer.locked) return;
+  if (!roamer.locked && !(isMobile && roamer.touchRunning)) return;
   const p = camera.position;
   nearHotspot = null;
   let best = 5.0;
@@ -435,7 +442,7 @@ function addFpMarker(f) {
 
 function checkFpAim() {
   const tip = $('#fp-tip');
-  if (!roamer.locked || !fpMarkers.length) { tip.hidden = true; return; }
+  if ((!roamer.locked && !(isMobile && roamer.touchRunning)) || !fpMarkers.length) { tip.hidden = true; return; }
   raycaster.setFromCamera({ x: 0, y: 0 }, camera);
   raycaster.far = 26;
   const hits = raycaster.intersectObjects(fpMarkers.map(m => m.hit), false);
@@ -707,7 +714,15 @@ function bind() {
   $('#quiz-close').addEventListener('click', () => { $('#quiz-modal').hidden = true; });
   $('#quiz-submit').addEventListener('click', submitQuiz);
 
-  $('#lock-mask').addEventListener('click', () => roamer.lock());
+  $('#lock-mask').addEventListener('click', () => {
+    if (isMobile) {
+      roamer.touchRunning = true;
+      roamer.onLockChange(true);
+      $('#touch-controls').hidden = false;
+    } else {
+      roamer.lock();
+    }
+  });
   $('#btn-back').addEventListener('click', leaveSpot);
   $('#btn-theme').addEventListener('click', () => {
     const cur = resolveTheme(store.getTheme());
@@ -729,9 +744,10 @@ function bind() {
   document.addEventListener('keydown', e => {
     if ($('#stage').hidden || !running) return;
     if (!$('#note-modal').hidden) return;
-    if (e.code === 'KeyE' && roamer.locked) openNote();
-    if (e.code === 'KeyG' && roamer.locked) openSpotDetail();
-    if (e.code === 'KeyF' && roamer.locked) { roamer.unlock(); openMood(); }
+    const active = roamer.locked || (isMobile && roamer.touchRunning);
+    if (e.code === 'KeyE' && active) openNote();
+    if (e.code === 'KeyG' && active) openSpotDetail();
+    if (e.code === 'KeyF' && active) { roamer.unlock(); openMood(); }
   });
 
   document.querySelectorAll('#note-moods button').forEach(b =>
@@ -755,6 +771,133 @@ function bind() {
     a.click();
     toast('卡片已下载，拿去朋友圈抽象吧');
   });
+
+  // ═════════ 移动端触摸控制 ═════════
+  if (isMobile) document.body.classList.add('is-mobile');
+  initTouchControls();
+
+  // ═════════ 个人主页 ═════════
+  $('#btn-profile').addEventListener('click', openProfile);
+  $('#profile-close').addEventListener('click', () => { $('#profile-modal').hidden = true; });
+  $('#profile-save').addEventListener('click', saveProfile);
+  document.querySelectorAll('.pmood').forEach(b => {
+    b.addEventListener('click', () => {
+      document.querySelectorAll('.pmood').forEach(x => x.classList.remove('on'));
+      b.classList.add('on');
+    });
+  });
+}
+
+// ═════════ 触摸控制初始化 ═════════
+function initTouchControls() {
+  const base = $('#joystick-base');
+  const knob = $('#joystick-knob');
+  const lookZone = $('#touch-look-zone');
+  if (!base || !lookZone) return;
+
+  let joyId = null, joyCX = 0, joyCY = 0;
+  const maxR = 38;
+
+  base.addEventListener('touchstart', e => {
+    e.preventDefault();
+    const t = e.changedTouches[0];
+    joyId = t.identifier;
+    const rect = base.getBoundingClientRect();
+    joyCX = rect.left + rect.width / 2;
+    joyCY = rect.top + rect.height / 2;
+  }, { passive: false });
+
+  document.addEventListener('touchmove', e => {
+    for (const t of e.changedTouches) {
+      if (t.identifier === joyId) {
+        let dx = t.clientX - joyCX, dy = t.clientY - joyCY;
+        const dist = Math.hypot(dx, dy);
+        if (dist > maxR) { dx *= maxR / dist; dy *= maxR / dist; }
+        knob.style.transform = 'translate(' + dx + 'px,' + dy + 'px)';
+        roamer.touchMove.x = dx / maxR;
+        roamer.touchMove.y = dy / maxR;
+      }
+    }
+  }, { passive: false });
+
+  document.addEventListener('touchend', e => {
+    for (const t of e.changedTouches) {
+      if (t.identifier === joyId) {
+        joyId = null;
+        knob.style.transform = 'translate(0,0)';
+        roamer.touchMove.x = 0;
+        roamer.touchMove.y = 0;
+      }
+    }
+  });
+
+  // 右侧滑动环视
+  let lookId = null, lookLX = 0, lookLY = 0;
+  lookZone.addEventListener('touchstart', e => {
+    e.preventDefault();
+    const t = e.changedTouches[0];
+    lookId = t.identifier;
+    lookLX = t.clientX; lookLY = t.clientY;
+  }, { passive: false });
+
+  lookZone.addEventListener('touchmove', e => {
+    e.preventDefault();
+    for (const t of e.changedTouches) {
+      if (t.identifier === lookId) {
+        roamer.touchLook.x += (t.clientX - lookLX) * 1.2;
+        roamer.touchLook.y += (t.clientY - lookLY) * 1.2;
+        lookLX = t.clientX; lookLY = t.clientY;
+      }
+    }
+  }, { passive: false });
+
+  lookZone.addEventListener('touchend', e => {
+    for (const t of e.changedTouches) {
+      if (t.identifier === lookId) lookId = null;
+    }
+  });
+
+  // 触摸按钮
+  $('#touch-fp')?.addEventListener('click', () => { if (roamer.touchRunning) openNote(); });
+  $('#touch-info')?.addEventListener('click', () => { if (roamer.touchRunning) openSpotDetail(); });
+}
+
+// ═════════ 个人主页逻辑 ═════════
+function openProfile() {
+  const p = store.data.profile || {};
+  $('#profile-name').value = store.data.user?.name || '';
+  $('#profile-bio').value = p.bio || '';
+  $('#profile-city').value = p.city || '';
+  $('#profile-avatar').textContent = (store.data.user?.name || '游')[0];
+  // 心情选中
+  document.querySelectorAll('.pmood').forEach(b => {
+    b.classList.toggle('on', b.dataset.m === p.mood);
+  });
+  // 统计
+  const fpCount = store.data.footprints.length;
+  const spotCount = Object.keys(store.data.visits).length;
+  const shredCount = store.data.shredCount || 0;
+  $('#profile-stats').innerHTML =
+    '足迹留言：<b>' + fpCount + '</b> 条<br>' +
+    '到访景点：<b>' + spotCount + '</b> 个<br>' +
+    '粉碎烦恼：<b>' + shredCount + '</b> 段<br>' +
+    '当前称号：<b>' + titleFor(fpCount) + '</b>';
+  $('#profile-modal').hidden = false;
+}
+
+function saveProfile() {
+  const name = $('#profile-name').value.trim() || '无名氏';
+  const moodBtn = document.querySelector('.pmood.on');
+  store.data.profile = {
+    bio: $('#profile-bio').value.trim(),
+    city: $('#profile-city').value.trim(),
+    mood: moodBtn ? moodBtn.dataset.m : '',
+  };
+  if (store.data.user) store.data.user.name = name;
+  try { localStorage.setItem('other-side-wuxi-v1', JSON.stringify(store.data)); } catch(e) {}
+  $('#user-name').textContent = name;
+  $('#profile-modal').hidden = true;
+  toast('档案已保存，继续夜游吧');
 }
 
 function leaveSpotSilent() {

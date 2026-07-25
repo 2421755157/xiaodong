@@ -47,6 +47,7 @@
       <button class="btn-ghost" id="btn-fortune">摇一签</button>
       <button class="btn-ghost" id="btn-shredder">碎碎平安</button>
       <button class="btn-gold" id="btn-mood-home">鉴定精神状态</button>
+      <button class="btn-ghost" id="btn-profile">我的</button>
       <button class="btn-ghost" id="btn-logout" title="换个身份">收工</button>
     </div>
   </header>
@@ -84,7 +85,21 @@
   <div id="lock-mask">
     <div class="lock-inner">
       <b id="lock-title">点击画面，进入这里</b>
-      <span>W A S D 移动 · 鼠标环视 · Shift 疾走 · E 留下足迹</span>
+      <span class="lock-hint-desktop">W A S D 移动 · 鼠标环视 · Shift 疾走 · E 留下足迹</span>
+      <span class="lock-hint-mobile">左侧摇杆移动 · 右侧滑动环视 · 点击按钮互动</span>
+      <p class="lock-disclaimer">场景由程序实时生成，仅供娱乐参考，不代表实景</p>
+    </div>
+  </div>
+
+  <!-- 移动端触摸控制 -->
+  <div id="touch-controls" hidden>
+    <div id="joystick-zone">
+      <div id="joystick-base"><div id="joystick-knob"></div></div>
+    </div>
+    <div id="touch-look-zone"></div>
+    <div id="touch-btns">
+      <button class="touch-btn" id="touch-fp">足迹</button>
+      <button class="touch-btn" id="touch-info">解说</button>
     </div>
   </div>
 
@@ -105,13 +120,14 @@
   <div id="hotspot-tip" hidden></div>
   <div id="fp-tip" hidden></div>
 
-  <div class="hud hud-bc">
+  <div class="hud hud-bc hud-desktop-only">
     <span class="kbd">W</span><span class="kbd">A</span><span class="kbd">S</span><span class="kbd">D</span> 移动
     · <span class="kbd">Shift</span> 疾走
     · <span class="kbd">E</span> 留下足迹
     · <span class="kbd">G</span> 看标志地点解说
     · <span class="kbd">F</span> 心情鉴定
     · <span class="kbd">Esc</span> 松手
+    <span class="hud-disclaimer">| 场景程序化生成，仅供参考</span>
   </div>
 </section>
 
@@ -229,6 +245,41 @@
     <div class="modal-actions">
       <button class="btn-ghost" id="quiz-close">算了不鉴定了</button>
       <button class="btn-gold" id="quiz-submit" disabled>出鉴定结果 →</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════ 弹窗：个人主页 ══════════ -->
+<div class="modal" id="profile-modal" hidden>
+  <div class="modal-card profile-card">
+    <p class="fortune-eyebrow">夜游神 · 我的档案</p>
+    <div class="profile-avatar" id="profile-avatar">游</div>
+    <div class="profile-field">
+      <label>称呼</label>
+      <input id="profile-name" type="text" maxlength="12" placeholder="你的夜游代号">
+    </div>
+    <div class="profile-field">
+      <label>一句话签名</label>
+      <input id="profile-bio" type="text" maxlength="40" placeholder="例如：白天搬砖，夜里漫游">
+    </div>
+    <div class="profile-field">
+      <label>最想去的城市</label>
+      <input id="profile-city" type="text" maxlength="10" placeholder="例如：大理、拉萨、成都">
+    </div>
+    <div class="profile-field">
+      <label>夜游心情</label>
+      <div class="profile-moods" id="profile-moods">
+        <button class="pmood" data-m="😄">😄</button>
+        <button class="pmood" data-m="🙂">🙂</button>
+        <button class="pmood" data-m="😐">😐</button>
+        <button class="pmood" data-m="😔">😔</button>
+        <button class="pmood" data-m="🌙">🌙</button>
+      </div>
+    </div>
+    <div class="profile-stats" id="profile-stats"></div>
+    <div class="modal-actions">
+      <button class="btn-ghost" id="profile-close">关闭</button>
+      <button class="btn-gold" id="profile-save">保存档案</button>
     </div>
   </div>
 </div>
