@@ -6,7 +6,7 @@
 
 ## 在线体验
 
-**https://2421755157.github.io/xiaodong/**
+**https://2421755157.github.io/xiaodong-yyds/**
 
 手机和电脑均可访问。电脑端使用 WASD + 鼠标操控，手机端使用虚拟摇杆 + 滑动环视。
 
